@@ -4,44 +4,51 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
+    // Helper function to check if the user is the owner of the document
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return request.auth != null && request.auth.uid == userId;
     }
 
     // Rules for the 'users' collection
     match /users/{userId} {
-      // Allow users to read their own profile
-      allow get: if isSignedIn() && isOwner(userId);
+      // Allow users to create their own user document upon signup
+      // Allow users to read their own user document
+      allow create, read: if isOwner(userId);
 
-      // Allow anyone to create a user profile (for signup)
-      // We can tighten this later if needed
-      allow create: if isSignedIn();
-
-      // Allow users to update their own profile
-      allow update: if isSignedIn() && isOwner(userId);
+      // Allow users to update their own profile information
+      allow update: if isOwner(userId);
     }
 
-    // NOTE: The following collections are placeholders and have open access.
-    // You should define proper security rules for them before production.
-    match /equipment/{docId} {
-      allow read, write: if isSignedIn();
+    // Rules for equipment listings
+    match /equipment/{equipmentId} {
+      // Anyone can read equipment listings
+      allow read: if true;
+      // Owners can create, update, and delete their own equipment listings
+      allow create, update, delete: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
     }
 
-    match /bookings/{docId} {
-      allow read, write: if isSignedIn();
+    // Rules for produce listings
+    match /produceListings/{listingId} {
+        // Anyone can read produce listings
+        allow read: if true;
+        // Farmers can create, update, and delete their own listings
+        allow create, update, delete: if request.auth != null && request.resource.data.farmerId == request.auth.uid;
     }
 
-    match /produceListings/{docId} {
-      allow read, write: if isSignedIn();
+    // Rules for bookings
+    match /bookings/{bookingId} {
+        // The farmer who made the booking or the owner of the equipment can read it
+        allow read: if request.auth != null && (isOwner(resource.data.farmerId) || isOwner(resource.data.ownerId));
+        // Farmers can create bookings
+        allow create: if request.auth != null && isOwner(request.resource.data.farmerId);
+        // The owner can update the status of a booking (confirm/cancel)
+        allow update: if request.auth != null && isOwner(resource.data.ownerId);
     }
 
-    match /carbonCredits/{docId} {
-        allow read, write: if isSignedIn();
+     // Rules for carbon credits
+    match /carbonCredits/{creditId} {
+      // A user can only read their own carbon credit document
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
     }
   }
 }
