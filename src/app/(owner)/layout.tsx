@@ -2,12 +2,11 @@
 import React from "react";
 import Link from 'next/link';
 import { usePathname } from "next/navigation";
-import { Bell, LayoutDashboard, List, Tractor } from "lucide-react";
+import { Bell, LayoutDashboard, Tractor } from "lucide-react";
 
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import { UserNav } from "@/components/app/UserNav";
 import AppLogo from "@/components/app/AppLogo";
-import { cn } from "@/lib/utils";
 
 const navItems = [
     { href: "/owner/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -29,7 +28,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                             <SidebarMenuItem key={item.href}>
                                 <Link href={item.href}>
                                     <SidebarMenuButton 
-                                        isActive={pathname === item.href}
+                                        isActive={pathname.startsWith(item.href)}
                                         tooltip={item.label}
                                     >
                                         <item.icon className="h-4 w-4" />
@@ -46,7 +45,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                 <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
                     <SidebarTrigger className="md:hidden"/>
                     <div className="flex-1">
-                        <h1 className="font-semibold text-lg">{navItems.find(i => i.href === pathname)?.label}</h1>
+                        <h1 className="font-semibold text-lg">{navItems.find(i => pathname.startsWith(i.href))?.label}</h1>
                     </div>
                     <UserNav />
                 </header>

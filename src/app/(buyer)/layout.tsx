@@ -2,16 +2,14 @@
 import React from "react";
 import Link from 'next/link';
 import { usePathname } from "next/navigation";
-import { ShoppingCart, Star } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import { UserNav } from "@/components/app/UserNav";
 import AppLogo from "@/components/app/AppLogo";
-import { cn } from "@/lib/utils";
 
 const navItems = [
-    { href: "/buyer/dashboard", label: "Marketplace", icon: ShoppingCart },
-    // { href: "/buyer/watchlist", label: "My Watchlist", icon: Star },
+    { href: "/buyer/marketplace", label: "Marketplace", icon: ShoppingCart },
 ];
 
 export default function BuyerLayout({ children }: { children: React.ReactNode }) {
@@ -45,7 +43,7 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
                 <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
                     <SidebarTrigger className="md:hidden"/>
                     <div className="flex-1">
-                        <h1 className="font-semibold text-lg">{navItems.find(i => i.href === pathname)?.label}</h1>
+                        <h1 className="font-semibold text-lg">{navItems.find(i => pathname.startsWith(i.href))?.label}</h1>
                     </div>
                     <UserNav />
                 </header>

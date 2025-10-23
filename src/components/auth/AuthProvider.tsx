@@ -22,9 +22,9 @@ const protectedRoutes: { [key in UserRole]: string[] } = {
 const publicRoutes = ['/', '/login', '/signup'];
 
 const roleRedirects: { [key in UserRole]: string } = {
-  farmer: '/farmer/dashboard',
-  owner: '/owner/dashboard',
-  buyer: '/buyer/dashboard',
+  farmer: '/farmer',
+  owner: '/owner',
+  buyer: '/buyer/marketplace',
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (loading) return;
 
-    const isPublic = publicRoutes.includes(pathname);
+    const isPublic = publicRoutes.some(route => pathname === route);
     const isAuthPage = pathname === '/login' || pathname === '/signup';
 
     if (!user && !isPublic) {

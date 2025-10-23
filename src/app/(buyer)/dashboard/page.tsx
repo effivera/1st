@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -9,7 +10,6 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/componen
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { IndianRupee, MapPin, Phone, Search, Scale, User } from "lucide-react";
@@ -30,7 +30,7 @@ interface FullListing extends ProduceListing {
     farmerDetails?: UserProfile;
 }
 
-export default function BuyerDashboard() {
+export default function BuyerMarketplacePage() {
   const [listings, setListings] = useState<ProduceListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ search: "", location: "" });
