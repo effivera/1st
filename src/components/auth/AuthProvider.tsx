@@ -1,3 +1,4 @@
+
 "use client";
 import {
   ReactNode,
@@ -13,17 +14,18 @@ import { auth, db } from '@/lib/firebase/config';
 import { AuthContext, UserProfile, UserRole } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
-const protectedRoutes: { [key in UserRole]: string[] } = {
+const protectedRoutes: { [key in UserRole | 'admin']: string[] } = {
   farmer: ['/farmer'],
   owner: ['/owner'],
   buyer: ['/buyer'],
+  admin: ['/admin'],
 };
 
 const publicRoutes = ['/', '/login', '/signup'];
 
 const roleRedirects: { [key in UserRole]: string } = {
-  farmer: '/farmer',
-  owner: '/owner',
+  farmer: '/farmer/dashboard',
+  owner: '/owner/dashboard',
   buyer: '/buyer/marketplace',
 };
 

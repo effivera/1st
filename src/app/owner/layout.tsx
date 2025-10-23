@@ -3,19 +3,20 @@
 import React from "react";
 import Link from 'next/link';
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ShoppingCart } from "lucide-react";
+import { Bell, LayoutDashboard, Tractor } from "lucide-react";
 
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import { UserNav } from "@/components/app/UserNav";
 import AppLogo from "@/components/app/AppLogo";
 
 const navItems = [
-    { href: "/buyer/marketplace", label: "Marketplace", icon: ShoppingCart },
+    { href: "/owner/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/owner/equipment", label: "My Equipment", icon: Tractor },
+    { href: "/owner/requests", label: "Booking Requests", icon: Bell },
 ];
 
-export default function BuyerLayout({ children }: { children: React.ReactNode }) {
+export default function OwnerLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const currentNavItem = navItems.find(i => pathname.startsWith(i.href));
     return (
         <SidebarProvider>
             <Sidebar>
@@ -45,7 +46,7 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
                 <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
                     <SidebarTrigger className="md:hidden"/>
                     <div className="flex-1">
-                        <h1 className="font-semibold text-lg">{currentNavItem?.label}</h1>
+                        <h1 className="font-semibold text-lg">{navItems.find(i => pathname.startsWith(i.href))?.label}</h1>
                     </div>
                     <UserNav />
                 </header>
@@ -56,4 +57,3 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
         </SidebarProvider>
     );
 }
-

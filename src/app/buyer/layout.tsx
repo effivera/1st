@@ -56,4 +56,3 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
         </SidebarProvider>
     );
 }
-

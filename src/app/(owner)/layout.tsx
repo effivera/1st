@@ -1,3 +1,4 @@
+
 "use client"
 import React from "react";
 import Link from 'next/link';
@@ -28,7 +29,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                             <SidebarMenuItem key={item.href}>
                                 <Link href={item.href}>
                                     <SidebarMenuButton 
-                                        isActive={pathname.startsWith(item.href)}
+                                        isActive={pathname === item.href}
                                         tooltip={item.label}
                                     >
                                         <item.icon className="h-4 w-4" />
