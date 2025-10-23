@@ -14,6 +14,7 @@ import { auth, db } from '@/lib/firebase/config';
 import { AuthContext, UserProfile, UserRole } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
+import { Toaster } from '@/components/ui/toaster';
 
 const protectedRoutes: { [key in UserRole | 'admin']: string[] } = {
   farmer: ['/farmer'],
