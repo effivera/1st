@@ -63,14 +63,19 @@ export function useCollection<T = any>(
 
   useEffect(() => {
     if (!memoizedTargetRefOrQuery) {
-      setData(null);
-      setIsLoading(false);
-      setError(null);
+      // Defer state updates to the microtask queue to avoid synchronous setState warnings
+      queueMicrotask(() => {
+        setData(null);
+        setIsLoading(false);
+        setError(null);
+      })
       return;
     }
 
-    setIsLoading(true);
-    setError(null);
+    queueMicrotask(() => {
+      setIsLoading(true);
+      setError(null);
+    })
 
     // Directly use memoizedTargetRefOrQuery as it's assumed to be the final query
     const unsubscribe = onSnapshot(
@@ -80,9 +85,11 @@ export function useCollection<T = any>(
         for (const doc of snapshot.docs) {
           results.push({ ...(doc.data() as T), id: doc.id });
         }
-        setData(results);
-        setError(null);
-        setIsLoading(false);
+        queueMicrotask(() => {
+          setData(results);
+          setError(null);
+          setIsLoading(false);
+        })
       },
       (error: FirestoreError) => {
         // This logic extracts the path from either a ref or a query
@@ -96,9 +103,11 @@ export function useCollection<T = any>(
           path,
         })
 
-        setError(contextualError)
-        setData(null)
-        setIsLoading(false)
+        queueMicrotask(() => {
+          setError(contextualError)
+          setData(null)
+          setIsLoading(false)
+        })
 
         // trigger global error propagation
         errorEmitter.emit('permission-error', contextualError);

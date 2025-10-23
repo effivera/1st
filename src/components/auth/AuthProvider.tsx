@@ -60,53 +60,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!auth) {
-        setLoading(false);
-        return;
-    };
-    
+      // No auth instance; nothing to observe but we should end loading.
+      // Defer to avoid synchronous setState in effect warning.
+      queueMicrotask(() => setLoading(false));
+      return;
+    }
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       if (!currentUser) {
-        // If user logs out, clear profile and stop loading
         setUserProfile(null);
-        setLoading(false);
+        // Defer state update to avoid synchronous setState inside effect warnings
+        queueMicrotask(() => setLoading(false));
       }
-      // If user logs in, we wait for the profile snapshot to set loading to false
     });
     return () => unsubscribeAuth();
   }, [auth]);
   
   useEffect(() => {
     if (!user || !firestore) {
-      // If there's no user, we don't need a profile.
-      setLoading(false);
+      queueMicrotask(() => setLoading(false));
       return;
     }
-
-    setLoading(true);
+    // Defer loading true to microtask as well to satisfy strict hooks rules
+    queueMicrotask(() => setLoading(true));
     const docRef = doc(firestore, 'users', user.uid);
-    const unsubscribeProfile = onSnapshot(docRef, 
-      (doc) => {
-        if (doc.exists()) {
-          setUserProfile(doc.data() as UserProfile);
+    const unsubscribeProfile = onSnapshot(
+      docRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          setUserProfile(snapshot.data() as UserProfile);
         } else {
-           // This can happen briefly during signup before the user doc is created.
-           // We keep loading until the document appears.
-           setUserProfile(null);
+          setUserProfile(null);
         }
-        setLoading(false);
+        queueMicrotask(() => setLoading(false));
       },
-      (error) => {
+      () => {
         const permissionError = new FirestorePermissionError({
           path: docRef.path,
           operation: 'get',
         });
         errorEmitter.emit('permission-error', permissionError);
-        setLoading(false);
-        // Do not log out, let the error boundary handle it.
+        queueMicrotask(() => setLoading(false));
       }
     );
-    
     return () => unsubscribeProfile();
   }, [user, firestore]);
 

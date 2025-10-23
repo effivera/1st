@@ -178,7 +178,7 @@ export default function MyEquipmentPage() {
       ) : (
         <div className="text-center py-16 border-2 border-dashed rounded-lg">
           <h3 className="text-xl font-semibold">No Equipment Listed Yet</h3>
-          <p className="text-muted-foreground mt-2">Click "Add New Equipment" to get started.</p>
+          <p className="text-muted-foreground mt-2">Click &quot;Add New Equipment&quot; to get started.</p>
         </div>
       )}
     </>
