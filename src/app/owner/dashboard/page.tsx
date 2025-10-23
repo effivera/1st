@@ -79,7 +79,7 @@ export default function OwnerDashboard() {
     <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold font-headline">Welcome, {userProfile.name}!</h2>
-        <p className="text-muted-foreground">Here's a summary of your equipment rental business.</p>
+        <p className="text-muted-foreground">Here&apos;s a summary of your equipment rental business.</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

@@ -189,7 +189,7 @@ export default function SellProducePage() {
         ) : (
           <div className="text-center py-16 border-2 border-dashed rounded-lg">
             <h3 className="text-xl font-semibold">No Produce Listed Yet</h3>
-            <p className="text-muted-foreground mt-2">Click "Sell Your Fasal" to add your produce to the marketplace.</p>
+            <p className="text-muted-foreground mt-2">Click &quot;Sell Your Fasal&quot; to add your produce to the marketplace.</p>
           </div>
         )
       )}

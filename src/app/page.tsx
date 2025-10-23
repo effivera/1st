@@ -42,7 +42,7 @@ export default function Home() {
                   </Link>
                   <Link href="/login">
                     <Button size="lg" variant="secondary">
-                      I'm already a member
+                      I&apos;m already a member
                     </Button>
                   </Link>
                 </div>
