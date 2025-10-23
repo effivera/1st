@@ -1,0 +1,47 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Rules for the 'users' collection
+    match /users/{userId} {
+      // Allow users to read their own profile
+      allow get: if isSignedIn() && isOwner(userId);
+
+      // Allow anyone to create a user profile (for signup)
+      // We can tighten this later if needed
+      allow create: if isSignedIn();
+
+      // Allow users to update their own profile
+      allow update: if isSignedIn() && isOwner(userId);
+    }
+
+    // NOTE: The following collections are placeholders and have open access.
+    // You should define proper security rules for them before production.
+    match /equipment/{docId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /bookings/{docId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /produceListings/{docId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /carbonCredits/{docId} {
+        allow read, write: if isSignedIn();
+    }
+  }
+}
