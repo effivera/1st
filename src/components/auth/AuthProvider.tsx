@@ -69,14 +69,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   useEffect(() => {
     let unsubscribeProfile: (() => void) | undefined;
-    if (user && !userProfile) {
+    if (user) {
       const docRef = doc(db, 'users', user.uid);
       unsubscribeProfile = onSnapshot(docRef, 
         (doc) => {
           if (doc.exists()) {
             setUserProfile(doc.data() as UserProfile);
           } else {
-            // This can happen briefly during signup before the user doc is created.
+             // This can happen briefly during signup before the user doc is created.
             // If it persists, it means document creation failed.
             // We will let the signup page error handler manage it.
           }
@@ -89,15 +89,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           });
           errorEmitter.emit('permission-error', permissionError);
           // Log the user out as they can't get their profile
-          handleSignOut();
+          // handleSignOut();
         }
       );
-    } else if (!user) {
+    } else {
         setUserProfile(null);
         setLoading(false);
     }
     return () => unsubscribeProfile && unsubscribeProfile();
-  }, [user, userProfile, handleSignOut]);
+  }, [user, handleSignOut]);
 
   useEffect(() => {
     if (loading) return;
