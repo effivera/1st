@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { signInWithEmailAndPassword } from 'firebase/auth';
 import {
   Card,
   CardContent,
@@ -23,12 +22,12 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { auth } from '@/lib/firebase/config';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useAuth, initiateEmailSignIn } from '@/firebase';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address.'),
@@ -43,29 +42,31 @@ const demoUsers = [
 
 export default function LoginPage() {
   const { toast } = useToast();
-  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const auth = useAuth();
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: '',
-      password: '',
+      password: 'password',
     },
   });
 
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsSubmitting(true);
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
-      // The AuthProvider will handle the redirect.
+      // We are not awaiting this. The onAuthStateChanged listener in AuthProvider will handle the redirect.
+      initiateEmailSignIn(auth, values.email, values.password);
     } catch (error: any) {
-      console.error("Login Error:", error);
+      console.error("Login Submission Error:", error);
       toast({
         variant: 'destructive',
         title: 'Login Failed',
         description: error.message || 'An unexpected error occurred. Please try again.',
       });
+      // Also emit to our global handler
+      errorEmitter.emit('permission-error', error);
       setIsSubmitting(false);
     }
   };

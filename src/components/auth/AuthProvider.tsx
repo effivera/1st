@@ -7,16 +7,16 @@ import {
   useCallback,
 } from 'react';
 import { User, onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { usePathname, useRouter } from 'next/navigation';
 
-import { auth, db } from '@/lib/firebase/config';
-import { AuthContext, UserProfile, UserRole } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { Toaster } from '@/components/ui/toaster';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { AuthContext, UserProfile, UserRole } from '@/context/AuthContext';
+import { useFirebase } from '@/firebase';
 
 const protectedRoutes: { [key in UserRole | 'admin']: string[] } = {
   farmer: ['/farmer'],
@@ -34,6 +34,7 @@ const roleRedirects: { [key in UserRole]: string } = {
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { auth, firestore } = useFirebase();
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,10 +44,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const handleSignOut = useCallback(async () => {
     try {
-      await signOut(auth);
-      setUser(null);
-      setUserProfile(null);
-      router.push('/login');
+      if (auth) {
+        await signOut(auth);
+      }
+      // State updates will be triggered by onAuthStateChanged
     } catch (error) {
       console.error('Error signing out:', error);
       toast({
@@ -55,49 +56,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         variant: "destructive",
       });
     }
-  }, [router, toast]);
+  }, [auth, toast]);
 
   useEffect(() => {
+    if (!auth) {
+        setLoading(false);
+        return;
+    };
+    
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       if (!currentUser) {
-        setLoading(false);
-      }
-    });
-    return () => unsubscribeAuth();
-  }, []);
-  
-  useEffect(() => {
-    let unsubscribeProfile: (() => void) | undefined;
-    if (user) {
-      const docRef = doc(db, 'users', user.uid);
-      unsubscribeProfile = onSnapshot(docRef, 
-        (doc) => {
-          if (doc.exists()) {
-            setUserProfile(doc.data() as UserProfile);
-          } else {
-             // This can happen briefly during signup before the user doc is created.
-            // If it persists, it means document creation failed.
-            // We will let the signup page error handler manage it.
-          }
-          setLoading(false);
-        },
-        (error) => {
-          const permissionError = new FirestorePermissionError({
-            path: docRef.path,
-            operation: 'get',
-          });
-          errorEmitter.emit('permission-error', permissionError);
-          // Log the user out as they can't get their profile
-          // handleSignOut();
-        }
-      );
-    } else {
+        // If user logs out, clear profile and stop loading
         setUserProfile(null);
         setLoading(false);
+      }
+      // If user logs in, we wait for the profile snapshot to set loading to false
+    });
+    return () => unsubscribeAuth();
+  }, [auth]);
+  
+  useEffect(() => {
+    if (!user || !firestore) {
+      // If there's no user, we don't need a profile.
+      setLoading(false);
+      return;
     }
-    return () => unsubscribeProfile && unsubscribeProfile();
-  }, [user, handleSignOut]);
+
+    setLoading(true);
+    const docRef = doc(firestore, 'users', user.uid);
+    const unsubscribeProfile = onSnapshot(docRef, 
+      (doc) => {
+        if (doc.exists()) {
+          setUserProfile(doc.data() as UserProfile);
+        } else {
+           // This can happen briefly during signup before the user doc is created.
+           // We keep loading until the document appears.
+           setUserProfile(null);
+        }
+        setLoading(false);
+      },
+      (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'get',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        setLoading(false);
+        // Do not log out, let the error boundary handle it.
+      }
+    );
+    
+    return () => unsubscribeProfile();
+  }, [user, firestore]);
 
   useEffect(() => {
     if (loading) return;
@@ -118,7 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const allowedPaths = protectedRoutes[userProfile.role];
       const isAuthorized = allowedPaths.some(prefix => pathname.startsWith(prefix));
-
+      
       if (!isAuthorized && !isPublic) {
          router.push(roleRedirects[userProfile.role]);
       }
@@ -137,7 +148,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider value={{ user, userProfile, loading, logout: handleSignOut }}>
       <FirebaseErrorListener />
       {children}
-      <Toaster />
     </AuthContext.Provider>
   );
 }

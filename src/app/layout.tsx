@@ -3,6 +3,7 @@ import './globals.css';
 import { AuthProvider } from '@/components/auth/AuthProvider';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
   title: 'Effivera - AgriTech Ecosystem',
@@ -22,10 +23,12 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className={cn('font-body antialiased min-h-screen')}>
-        <AuthProvider>
-          {children}
-          <Toaster />
-        </AuthProvider>
+        <FirebaseClientProvider>
+          <AuthProvider>
+            {children}
+            <Toaster />
+          </AuthProvider>
+        </FirebaseClientProvider>
       </body>
     </html>
   );
