@@ -5,6 +5,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -21,11 +28,18 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address.'),
   password: z.string().min(6, 'Password must be at least 6 characters.'),
 });
+
+const demoUsers = [
+    { email: 'farmer@test.com', role: 'Farmer' },
+    { email: 'owner@test.com', role: 'Owner' },
+    { email: 'buyer@test.com', role: 'Buyer' },
+];
 
 export default function LoginPage() {
   const { toast } = useToast();
@@ -98,6 +112,23 @@ export default function LoginPage() {
           Sign up
         </Link>
       </div>
+
+       <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-lg">Demo Accounts</CardTitle>
+          <CardDescription>
+            Use these accounts to test the app. The password for all accounts is <span className="font-mono font-bold text-foreground">password</span>.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          {demoUsers.map(user => (
+            <div key={user.email} className="flex justify-between items-center">
+              <span className="text-muted-foreground">{user.email}</span>
+              <Badge variant="outline">{user.role}</Badge>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
     </>
   );
 }
