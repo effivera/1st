@@ -15,6 +15,8 @@ import { AuthContext, UserProfile, UserRole } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { Toaster } from '@/components/ui/toaster';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const protectedRoutes: { [key in UserRole | 'admin']: string[] } = {
   farmer: ['/farmer'],
@@ -69,16 +71,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let unsubscribeProfile: (() => void) | undefined;
     if (user && !userProfile) {
       const docRef = doc(db, 'users', user.uid);
-      unsubscribeProfile = onSnapshot(docRef, (doc) => {
-        if (doc.exists()) {
-          setUserProfile(doc.data() as UserProfile);
-        } else {
-          // If user exists in auth but not in firestore, something is wrong.
-          // Log them out to be safe.
+      unsubscribeProfile = onSnapshot(docRef, 
+        (doc) => {
+          if (doc.exists()) {
+            setUserProfile(doc.data() as UserProfile);
+          } else {
+            // This can happen briefly during signup before the user doc is created.
+            // If it persists, it means document creation failed.
+            // We will let the signup page error handler manage it.
+          }
+          setLoading(false);
+        },
+        (error) => {
+          const permissionError = new FirestorePermissionError({
+            path: docRef.path,
+            operation: 'get',
+          });
+          errorEmitter.emit('permission-error', permissionError);
+          // Log the user out as they can't get their profile
           handleSignOut();
         }
-        setLoading(false);
-      });
+      );
     } else if (!user) {
         setUserProfile(null);
         setLoading(false);
