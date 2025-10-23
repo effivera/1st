@@ -1,41 +1,168 @@
+/**
+ * @fileOverview Firestore Security Rules for Effivera, an AgriTech platform.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for private data and allows public read access with owner-only writes for certain collections.
+ * Authorization decisions are based on the authenticated user's UID and denormalized ownership fields within documents, minimizing the need for complex queries.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores user profile data, accessible only to the user themselves.
+ * - /equipment/{equipmentId}: Stores equipment listings, accessible for public reading, but only the owner can modify them.
+ * - /bookings/{bookingId}: Stores booking information, accessible for public reading, but only the farmer or the owner can modify them.
+ * - /produceListings/{listingId}: Stores produce listings, accessible for public reading, but only the owner can modify them.
+ * - /carbonCredits/{carbonCreditId}: Stores carbon credit information, accessible only to the associated user.
+ *
+ * Key Security Decisions:
+ * - No global admin roles are defined; access is primarily owner-based.
+ * - User listing is implicitly disallowed by the absence of a top-level /users collection listing rule.
+ * - Public read access is granted to the /equipment, /bookings, and /produceListings collections to facilitate browsing and discovery.
+ * - Write access to /equipment, /bookings, and /produceListings is restricted to the owner of the respective resource, enforced by checking the 'ownerId' field.
+ *
+ * Denormalization for Authorization:
+ * - The 'ownerId' field is present in /equipment/{equipmentId}, /bookings/{bookingId}, and /produceListings/{listingId} documents to enable direct ownership checks without requiring additional reads.
+ * - The 'farmerId' field is present in /bookings/{bookingId} documents to allow the farmer to potentially modify them.
+ */
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users can create their own profile, and read/update it.
+    /**
+     * @description Allows a user to read and write their own profile data.
+     * @path /users/{userId}
+     * @allow (read, write) User with matching UID.
+     * @deny (read, write) User with non-matching UID.
+     * @principle Enforces user-ownership for profile data.
+     */
     match /users/{userId} {
-      allow read, update: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null;
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) && request.resource.data.uid == resource.data.uid;
+      allow delete: if isOwner(userId) && resource != null;
     }
 
-    // Farmers can create bookings, and see their own bookings.
+    /**
+     * @description Allows anyone to read equipment listings, but only the owner can modify them.
+     * @path /equipment/{equipmentId}
+     * @allow (get, list) Any user to read equipment listings.
+     * @allow (create) Owner of equipment, if ownerId matches authenticated user.
+     * @allow (update, delete) Owner of equipment, if ownerId matches authenticated user.
+     * @deny (create, update, delete) Non-owner.
+     * @principle Public read, owner-only write access.
+     */
+    match /equipment/{equipmentId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(ownerId) {
+        return isSignedIn() && request.auth.uid == ownerId;
+      }
+
+      function isExistingOwner(ownerId) {
+        return isOwner(ownerId) && resource != null;
+      }
+
+      allow get, list: if true;
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isExistingOwner(resource.data.ownerId);
+      allow delete: if isExistingOwner(resource.data.ownerId);
+    }
+
+    /**
+     * @description Allows anyone to read booking information, but only the farmer or the owner can modify them.
+     * @path /bookings/{bookingId}
+     * @allow (get, list) Any user to read booking information.
+     * @allow (create) Farmer or owner of booking, if farmerId or ownerId matches authenticated user.
+     * @allow (update, delete) Farmer or owner of booking, if farmerId or ownerId matches authenticated user.
+     * @deny (create, update, delete) Non-farmer/owner.
+     * @principle Public read, owner-only write access.
+     */
     match /bookings/{bookingId} {
-      allow read: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'farmer' && resource.data.farmerId == request.auth.uid) || (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'owner' && resource.data.ownerId == request.auth.uid);
-      allow create: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'farmer';
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isFarmer(farmerId) {
+        return isSignedIn() && request.auth.uid == farmerId;
+      }
+
+        function isOwner(ownerId) {
+        return isSignedIn() && request.auth.uid == ownerId;
+      }
+
+      function isExistingFarmerOrOwner(farmerId, ownerId) {
+          return (isFarmer(farmerId) || isOwner(ownerId)) && resource != null;
+      }
+
+
+      allow get, list: if true;
+      allow create: if isSignedIn() && (request.resource.data.farmerId == request.auth.uid || request.resource.data.ownerId == request.auth.uid);
+      allow update: if isExistingFarmerOrOwner(resource.data.farmerId, resource.data.ownerId);
+      allow delete: if isExistingFarmerOrOwner(resource.data.farmerId, resource.data.ownerId);
     }
 
-    // Owners can create, update and delete their own equipment listings.
-    match /equipment/{equipmentId} {
-       allow create, update, delete: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
-    }
-    
-    // Farmers can create their own produce listings.
+    /**
+     * @description Allows anyone to read produce listings, but only the owner can modify them.
+     * @path /produceListings/{listingId}
+     * @allow (get, list) Any user to read produce listings.
+     * @allow (create) Owner of listing, if farmerId matches authenticated user.
+     * @allow (update, delete) Owner of listing, if farmerId matches authenticated user.
+     * @deny (create, update, delete) Non-owner.
+     * @principle Public read, owner-only write access.
+     */
     match /produceListings/{listingId} {
-        allow create: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'farmer';
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(farmerId) {
+        return isSignedIn() && request.auth.uid == farmerId;
+      }
+
+      function isExistingOwner(farmerId) {
+        return isOwner(farmerId) && resource != null;
+      }
+
+      allow get, list: if true;
+      allow create: if isSignedIn() && request.resource.data.farmerId == request.auth.uid;
+      allow update: if isExistingOwner(resource.data.farmerId);
+      allow delete: if isExistingOwner(resource.data.farmerId);
     }
 
-    // Any authenticated user can read public listings.
-    match /equipment/{equipmentId} {
-      allow read: if request.auth != null;
-    }
-    match /produceListings/{listingId} {
-      allow read: if request.auth != null;
-    }
+    /**
+     * @description Allows a user to read and write their own carbon credit data.
+     * @path /carbonCredits/{carbonCreditId}
+     * @allow (read, write) User with matching UID.
+     * @deny (read, write) User with non-matching UID.
+     * @principle Enforces user-ownership for carbon credit data.
+     */
+    match /carbonCredits/{carbonCreditId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
 
-     // Any authenticated user can read carbon credits data.
-    match /carbonCredits/{creditId} {
-        allow read: if request.auth != null;
+      function isOwner(carbonCreditId) {
+        return isSignedIn() && request.auth.uid == carbonCreditId;
+      }
+
+      function isExistingOwner(carbonCreditId) {
+        return isOwner(carbonCreditId) && resource != null;
+      }
+
+      allow get: if isOwner(carbonCreditId);
+      allow list: if false;
+      allow create: if isOwner(carbonCreditId);
+      allow update: if isExistingOwner(carbonCreditId);
+      allow delete: if isExistingOwner(carbonCreditId);
     }
   }
 }

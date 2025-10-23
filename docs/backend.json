@@ -1,0 +1,327 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user in the Effivera platform.",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Unique identifier for the user, derived from Firebase Authentication."
+        },
+        "name": {
+          "type": "string",
+          "description": "The user's name."
+        },
+        "role": {
+          "type": "string",
+          "description": "The user's role within the platform (farmer, owner, or buyer)."
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The user's phone number."
+        },
+        "district": {
+          "type": "string",
+          "description": "The user's district."
+        },
+        "state": {
+          "type": "string",
+          "description": "The user's state."
+        }
+      },
+      "required": [
+        "uid",
+        "name",
+        "role",
+        "phoneNumber",
+        "district",
+        "state"
+      ]
+    },
+    "Equipment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Equipment",
+      "type": "object",
+      "description": "Represents an equipment listing for the FaaS (Farming as a Service) feature.",
+      "properties": {
+        "equipmentId": {
+          "type": "string",
+          "description": "Unique identifier for the equipment listing."
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Reference to the User who owns the equipment. (Relationship: User 1:N Equipment)"
+        },
+        "ownerName": {
+          "type": "string",
+          "description": "The name of the equipment owner."
+        },
+        "equipmentName": {
+          "type": "string",
+          "description": "The name of the equipment (e.g., 'John Deere Tractor')."
+        },
+        "equipmentType": {
+          "type": "string",
+          "description": "The type of equipment (e.g., 'Tractor', 'Harvester', 'Drone', 'Tiller')."
+        },
+        "rate": {
+          "type": "number",
+          "description": "The rental rate for the equipment."
+        },
+        "rateType": {
+          "type": "string",
+          "description": "The rate type (e.g., 'perHour', 'perDay', 'perAcre')."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the equipment image."
+        },
+        "location": {
+          "type": "string",
+          "description": "The location (district) where the equipment is available."
+        },
+        "isAvailable": {
+          "type": "boolean",
+          "description": "Indicates whether the equipment is currently available for booking."
+        }
+      },
+      "required": [
+        "equipmentId",
+        "ownerId",
+        "ownerName",
+        "equipmentName",
+        "equipmentType",
+        "rate",
+        "rateType",
+        "imageUrl",
+        "location",
+        "isAvailable"
+      ]
+    },
+    "Booking": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Booking",
+      "type": "object",
+      "description": "Represents a booking of equipment by a farmer.",
+      "properties": {
+        "bookingId": {
+          "type": "string",
+          "description": "Unique identifier for the booking."
+        },
+        "farmerId": {
+          "type": "string",
+          "description": "Reference to the User who made the booking. (Relationship: User 1:N Booking)"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Reference to the User who owns the equipment being booked. (Relationship: User 1:N Booking)"
+        },
+        "equipmentId": {
+          "type": "string",
+          "description": "Reference to the Equipment being booked. (Relationship: Equipment 1:N Booking)"
+        },
+        "equipmentName": {
+          "type": "string",
+          "description": "The name of the equipment being booked."
+        },
+        "bookingDate": {
+          "type": "string",
+          "description": "The date for which the equipment is booked.",
+          "format": "date-time"
+        },
+        "totalCost": {
+          "type": "number",
+          "description": "The total cost of the booking."
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the booking (pending, confirmed, completed, cancelled)."
+        }
+      },
+      "required": [
+        "bookingId",
+        "farmerId",
+        "ownerId",
+        "equipmentId",
+        "equipmentName",
+        "bookingDate",
+        "totalCost",
+        "status"
+      ]
+    },
+    "ProduceListing": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ProduceListing",
+      "type": "object",
+      "description": "Represents a listing of produce for the Fasal Connect feature.",
+      "properties": {
+        "listingId": {
+          "type": "string",
+          "description": "Unique identifier for the produce listing."
+        },
+        "farmerId": {
+          "type": "string",
+          "description": "Reference to the User who is selling the produce. (Relationship: User 1:N ProduceListing)"
+        },
+        "farmerName": {
+          "type": "string",
+          "description": "The name of the farmer selling the produce."
+        },
+        "produceName": {
+          "type": "string",
+          "description": "The name of the produce (e.g., 'Wheat')."
+        },
+        "quantity": {
+          "type": "number",
+          "description": "The quantity of produce available."
+        },
+        "quantityUnit": {
+          "type": "string",
+          "description": "The unit of quantity (e.g., 'Quintal', 'Ton')."
+        },
+        "askPrice": {
+          "type": "number",
+          "description": "The asking price per unit of produce."
+        },
+        "location": {
+          "type": "string",
+          "description": "The location where the produce is available."
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the listing (available, sold)."
+        }
+      },
+      "required": [
+        "listingId",
+        "farmerId",
+        "farmerName",
+        "produceName",
+        "quantity",
+        "quantityUnit",
+        "askPrice",
+        "location",
+        "status"
+      ]
+    },
+    "CarbonCredit": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CarbonCredit",
+      "type": "object",
+      "description": "Represents the carbon credits associated with a user.",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who owns the carbon credits. (Relationship: User 1:N CarbonCredit)"
+        },
+        "credits": {
+          "type": "number",
+          "description": "The number of carbon credits the user has."
+        },
+        "lastUpdated": {
+          "type": "string",
+          "description": "The date and time the carbon credits were last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "userId",
+        "credits",
+        "lastUpdated"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile data. Access controlled by the user's own UID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user, matching the Firebase Authentication UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/equipment/{equipmentId}",
+        "definition": {
+          "entityName": "Equipment",
+          "schema": {
+            "$ref": "#/backend/entities/Equipment"
+          },
+          "description": "Stores equipment listings. Includes denormalized 'ownerId' for authorization independence.",
+          "params": [
+            {
+              "name": "equipmentId",
+              "description": "The unique identifier for the equipment listing."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/bookings/{bookingId}",
+        "definition": {
+          "entityName": "Booking",
+          "schema": {
+            "$ref": "#/backend/entities/Booking"
+          },
+          "description": "Stores booking information. Includes 'farmerId' and 'ownerId' for authorization independence.",
+          "params": [
+            {
+              "name": "bookingId",
+              "description": "The unique identifier for the booking."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/produceListings/{listingId}",
+        "definition": {
+          "entityName": "ProduceListing",
+          "schema": {
+            "$ref": "#/backend/entities/ProduceListing"
+          },
+          "description": "Stores produce listings. Includes denormalized 'farmerId' and 'farmerName' for authorization independence.",
+          "params": [
+            {
+              "name": "listingId",
+              "description": "The unique identifier for the produce listing."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/carbonCredits/{carbonCreditId}",
+        "definition": {
+          "entityName": "CarbonCredit",
+          "schema": {
+            "$ref": "#/backend/entities/CarbonCredit"
+          },
+          "description": "Stores carbon credit information. Indexed by 'userId'.",
+          "params": [
+            {
+              "name": "carbonCreditId",
+              "description": "The unique identifier for the carbon credit entry (e.g., userId)."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to facilitate a secure and scalable AgriTech platform, Effivera, adhering to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. It leverages Structural Segregation and Access Modeling to optimize security rules and data integrity.\n\nAuthorization Independence:\n*   The structure avoids hierarchical authorization dependencies (`get()`) by denormalizing authorization context. For example, `ownerName` is included in the `equipment` and `produceListings` collections, enabling rules to validate ownership based solely on the document's contents and the `request.auth.uid`, without needing to fetch the parent `user` document.\n\nStructural Segregation:\n*   Different data types with varying access needs are stored in separate collections. User profiles are stored in `/users/{userId}`, equipment listings in `/equipment`, bookings in `/bookings`, produce listings in `/produceListings`, and carbon credits in `/carbonCredits`, ensuring each collection has a clear and homogeneous security posture.\n\nAccess Modeling:\n*   **Private Data (User Profiles):** User profiles are stored under `/users/{userId}`, providing path-based ownership for straightforward security rules.\n*   **User-Owned Data (Equipment, Bookings, Produce Listings, Carbon Credits):** The `/equipment`, `/bookings`, `/produceListings`, and `/carbonCredits` collections include the `ownerId` or `farmerId` field, which references the `users.uid`. This supports ownership-based security rules. Bookings also include the `farmerId`.\n*   **Global Roles:** This design assumes no global roles. All authorization is based on ownership and the user's `uid`.\n\nQAPs (Rules are not Filters):\n*   The segregation of data into separate collections based on access needs ensures that list operations are secure. For example, listing equipment is secure because each equipment document contains the `ownerId`, enabling rules to securely filter equipment listings based on the requesting user's `uid`.\n\nInvariants:\n*   Ownership is maintained by the `ownerId` field in the `equipment`, `bookings`, and `produceListings` collections, ensuring that only the owner can modify or delete their respective listings or equipment.\n*   Timestamps can be added to documents to track creation and modification times, ensuring data integrity and auditability.\n*   Denormalized data, such as `ownerName` in the `equipment` and `produceListings` collections, supports authorization independence and avoids the need for `get()` calls in security rules."
+  }
+}
