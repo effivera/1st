@@ -13,6 +13,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase/config';
 import { AuthContext, UserProfile, UserRole } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 const protectedRoutes: { [key in UserRole | 'admin']: string[] } = {
   farmer: ['/farmer'],
@@ -120,7 +121,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ user, userProfile, loading, logout: handleSignOut }}>
+      <FirebaseErrorListener />
       {children}
+      <Toaster />
     </AuthContext.Provider>
   );
 }

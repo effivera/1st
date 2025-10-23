@@ -25,11 +25,11 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { auth, db } from '@/lib/firebase/config';
-import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { UserRole } from '@/context/AuthContext';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 
 const signupSchema = z.object({
@@ -43,8 +43,6 @@ const signupSchema = z.object({
 });
 
 export default function SignupPage() {
-    const { toast } = useToast();
-    const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const form = useForm<z.infer<typeof signupSchema>>({
@@ -66,7 +64,7 @@ export default function SignupPage() {
             const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
             const user = userCredential.user;
 
-            await setDoc(doc(db, 'users', user.uid), {
+            const userProfileData = {
                 uid: user.uid,
                 name: values.name,
                 email: values.email,
@@ -74,16 +72,28 @@ export default function SignupPage() {
                 district: values.district,
                 state: values.state,
                 role: values.role as UserRole,
-            });
+            };
 
-            // The AuthProvider will handle the redirect.
+            const userDocRef = doc(db, 'users', user.uid);
+
+            setDoc(userDocRef, userProfileData)
+              .catch(async (serverError) => {
+                const permissionError = new FirestorePermissionError({
+                  path: userDocRef.path,
+                  operation: 'create',
+                  requestResourceData: userProfileData,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+                setIsSubmitting(false);
+              });
+
+            // The AuthProvider will handle the redirect if the setDoc is successful.
+            // We don't await the setDoc so the UI can optimistically proceed.
+            // If it fails, the error emitter will catch it.
+
         } catch (error: any) {
-            console.error("Signup Error:", error);
-            toast({
-                variant: 'destructive',
-                title: 'Signup Failed',
-                description: error.message || 'An unexpected error occurred. Please try again.',
-            });
+            // This catches auth errors (e.g., email already in use)
+            errorEmitter.emit('permission-error', error);
             setIsSubmitting(false);
         }
     };
